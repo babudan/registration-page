@@ -2,12 +2,12 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
     {
-        Name : {
+        teachername : {
             type : String,
             required : true
         },
         phoneno : {
-            type : Number,
+            type : String,
             required : true,
             unique : true
         },

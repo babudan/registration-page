@@ -1,13 +1,13 @@
-// const { object } = require("webidl-conversions");
+
 const usermodle = require("../modle/usermodle");
 const {isValid,isValidEmail,isValidName,isValidadress,isValidNumber,isValidPassword} = require("../validator/validations")
 const bcrypt = require("bcrypt")
-
+const jwt = require("jsonwebtoken")
 const nodemailer = require("nodemailer");
 
 const randomstring = require("randomstring");
 
-const sendresetPasswordMail = async(name, email, token) => {
+const sendresetPasswordMail = async(teachername, email, token) => {
        try {
           const transporter =   nodemailer.createTransport({
                 host : "smtp.gmail.com",
@@ -24,7 +24,7 @@ const sendresetPasswordMail = async(name, email, token) => {
                 from : "babudan517@gmail.com",
                 to : email,
                 subject : 'For reset password',
-                html : '<p>  hi '+name+' ,please copy the link and <a href="http://127.0.0.1:3000/api/reset-password?token='+token+'"> reset your password </a>'
+                html : '<p>  hi '+teachername+' ,please copy the link and <a href="http://127.0.0.1:3000/api/reset-password?token='+token+'"> reset your password </a>'
             }
             transporter.sendMail(mailOptions ,function(error ,info){
                        if(error){
@@ -42,13 +42,13 @@ const sendresetPasswordMail = async(name, email, token) => {
 const usercreate = async (req,res) => {
     try{
          let data = req.body;
-            let {Name ,phoneno ,email,adress,password} = data;
+            let {teachername ,phoneno ,email,adress,password} = data;
               
             if(Object.keys(data).length == 0) return res.status(400).send({status:false ,message:"plss put some data in the body"}) 
           
-             if ( !isValid(Name) || !isValidName(Name)) return res.status(400).send({ status: false, message: "plss put the username or put a valid username" })
+             if ( !isValid(teachername) || !isValidName(teachername)) return res.status(400).send({ status: false, message: "plss put the username or put a valid username" })
 
-             if(!isValid(phoneno) || !isValidNumber(phoneno)) return res.status(400).send({status:false, message:"plss put the phoneno or ph number must be starting from 6 and it contains 10 digits"});
+             if( !isValidNumber(phoneno)) return res.status(400).send({status:false, message:"plss put the phoneno or ph number must be starting from 6 and it contains 10 digits"});
 
              let newphone = await usermodle.findOne({phoneno});
              if(newphone) return res.status(400).send({status:false, message:"phoneno is already present"});
@@ -96,7 +96,18 @@ const userlogin = async (req,res) => {
                if (!matchPass) 
             return res.status(400).send({ status: false, message: "You Entered Wrong password" })
 
-          return res.status(200).send({statu:true, message:"get the user data", data:newemail})
+            const token = jwt.sign(
+                {
+                    _id: newemail._id,
+                    password : newemail.password,
+                  iat: Math.floor(Date.now() / 1000) - 30
+                },
+                process.env.SECRET_KEY,
+                { expiresIn: "24h" });
+
+            res.setHeader("x-api-key", token)
+
+          return res.status(200).send({statu:true, message:"get the user data", data:newemail ,token: token})
     }catch(err){
         return res.status(400).send({status:false ,message : err.message});
     }
@@ -115,7 +126,7 @@ const forget_password = async(req ,res) => {
          if(userdata){
             const randomString = randomstring.generate();
             const newdata = await usermodle.updateOne({email} ,{$set:{token:randomString}});
-            sendresetPasswordMail(userdata.Name,userdata.email,randomString);  
+            sendresetPasswordMail(userdata.teachername,userdata.email,randomString);  
 
             res.status(200).send({status:true ,message: "please check your email and reset the password"})
          }else {

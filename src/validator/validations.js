@@ -1,8 +1,14 @@
 const isValid = function (value) {
     if (typeof value === undefined || value == null || value.length == 0) return false;
     if (typeof value === "string" && value.trim().length === 0) return false;
+    if (typeof value === "string")
     return true;
   };
+
+  const isNumber = function (number) {
+  if (/^[0-9]/.test(number)) return true;
+  return false;
+};
 
   const isValidNumber = function (number) {
     if (/^[0]?[6789]\d{9}$/.test(number)) return true;
@@ -32,4 +38,4 @@ const isValidadress = function (name) {
     return false;
   };
 
-  module.exports = {isValid,isValidEmail,isValidName,isValidadress,isValidNumber,isValidPassword}
+  module.exports = {isValid,isValidEmail,isValidName,isValidadress,isValidNumber,isValidPassword,isNumber}
